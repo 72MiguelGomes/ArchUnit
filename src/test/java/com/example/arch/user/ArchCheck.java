@@ -3,24 +3,20 @@ package com.example.arch.user;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
-import com.tngtech.archunit.lang.syntax.ArchRuleDefinition;
+import com.tngtech.archunit.library.Architectures;
 
 @AnalyzeClasses(packages = "com.example.arch")
 public class ArchCheck {
 
   @ArchTest
-  public static final ArchRule controllerRule = ArchRuleDefinition.classes()
-      .that().resideInAPackage("com.example.arch.users.controller..")
-      .should().onlyHaveDependentClassesThat().resideInAnyPackage("com.example.arch.users.controller..");
+  public static final ArchRule userLayersRule = Architectures.layeredArchitecture()
+      .layer("Controller").definedBy("com.example.arch.user.controller..")
+      .layer("GlobalCore").definedBy("..core..")
+      .layer("Core").definedBy("com.example.arch.user.core..")
+      .layer("Repository").definedBy("com.example.arch.user.repo..")
 
-  @ArchTest
-  public static final ArchRule coreRule = ArchRuleDefinition.classes()
-      .that().resideInAPackage("com.example.arch.users.core..")
-      .should().onlyHaveDependentClassesThat().resideInAnyPackage("com.example.arch.users.controller..", "com.example.arch.users.core..");
-
-  @ArchTest
-  public static final ArchRule repoRule = ArchRuleDefinition.classes()
-      .that().resideInAPackage("com.example.arch.users.repo..")
-      .should().onlyHaveDependentClassesThat().resideInAnyPackage("com.example.arch.users.repo..", "com.example.arch.users.core..");
+      .whereLayer("Controller").mayNotBeAccessedByAnyLayer()
+      .whereLayer("Core").mayOnlyBeAccessedByLayers("Controller", "GlobalCore")
+      .whereLayer("Repository").mayOnlyBeAccessedByLayers("Core");
 
 }
